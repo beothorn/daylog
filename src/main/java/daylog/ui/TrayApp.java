@@ -3,6 +3,7 @@ package daylog.ui;
 import daylog.settings.Settings;
 import daylog.version.AppVersion;
 import java.awt.AWTException;
+import java.awt.Dimension;
 import java.awt.MenuItem;
 import java.awt.PopupMenu;
 import java.awt.SystemTray;
@@ -55,8 +56,22 @@ public final class TrayApp {
             log.error("Could not add the tray icon, daylog cannot be used", e);
             return false;
         }
+        redrawIconForRealSlotSize(icon);
         log.info("Daylog is running in the tray");
         return true;
+    }
+
+    /**
+     * The size the tray reports before the icon is added is only a hint; once it is added the icon knows the size of the slot it
+     * really got. If that differs we redraw the book at exactly that size, so the JDK never has to stretch it.
+     */
+    private void redrawIconForRealSlotSize(TrayIcon icon) {
+        Dimension slot = icon.getSize();
+        log.debug("Tray slot size is {}", slot);
+        if (slot.width <= 0 || slot.width != slot.height) {
+            return;
+        }
+        icon.setImage(BookIcon.draw(slot.width));
     }
 
     /** Builds the right click menu. */

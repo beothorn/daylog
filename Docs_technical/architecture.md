@@ -61,7 +61,7 @@ sequenceDiagram
 
 - Linux tray: GNOME removed legacy tray support; users need an AppIndicator extension. On Wayland the JDK tray runs through XWayland.
 - Keys: Enter saves from the text area and from the task field (unless a drop-down suggestion is highlighted, then Enter picks it); Shift+Enter inserts a line break (mapped to the text area's `insert-break` action); Ctrl+Enter also saves; Esc closes the drop-down, then the dialog.
-- The tray menu has the version as a disabled item. The tray icon is drawn to fill the square the JDK reports (24x24 on Ubuntu/GNOME).
+- The tray menu has the version as a disabled item. The tray icon (`BookIcon`) is a fully opaque blue tile (no transparent pixels, some trays paint them black) drawn 4x bigger and shrunk with a 4x4 box average. After the icon is added, `TrayIcon.getSize()` gives the real slot size and the icon is redrawn at exactly that size (the JDK reports 24x24 on Ubuntu/GNOME before adding). An SVG would not help: `TrayIcon` only takes bitmaps and the JDK cannot read SVG.
 - The dialog opens with focus on the text area (the task rarely changes). Clicking the tray while the dialog is open only brings it to front, so typed text is not lost.
 - `TrayIcon` mouse events differ between OS: use a `MouseListener` filtering button 1; the right-click menu is the AWT `PopupMenu` attached to the icon.
 - If `SystemTray.isSupported()` is false the app logs an error and exits with a message on stderr.
