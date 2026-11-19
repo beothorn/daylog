@@ -1,0 +1,7 @@
+target/
+aibin/
+secrets/
+.idea/
+*.iml
+.vscode/
+*.log
