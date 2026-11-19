@@ -21,7 +21,7 @@ Pick any text file (a new name creates it). Daylog remembers your choice. See [l
 If you have not chosen a diary file yet, Daylog asks for one first.
 
 ## What gets written
-Each note adds a few lines to the end of your diary file, after one empty line with the date and time (`year_month_day_hour_minute`), the task, and your text:
+Each note adds a few lines to the end of your diary file, after one empty line: the date and time (`year_month_day_hour_minute`), the task, and your text:
 
 ````
 2026_11_19_23_55 `Offhour work`
