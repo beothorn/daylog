@@ -2,7 +2,7 @@
 
 A tiny tray app to log what you are doing, so you can remember what you did yesterday.
 
-Click the tray icon, type a task and a few words, and Daylog appends a timestamped markdown entry to your diary file.
+Click the tray icon (a small book), type a few words and pick a task, and Daylog appends a timestamped markdown entry to your diary file.
 Single jar, no install, everything stays on your machine, instant to open. Works on Windows and Linux.
 
 ## Why

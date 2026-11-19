@@ -6,7 +6,7 @@
 
   <groupId>io.github.beothorn</groupId>
   <artifactId>daylog</artifactId>
-  <version>0.1.0-SNAPSHOT</version>
+  <version>0.0.1-SNAPSHOT</version>
   <packaging>jar</packaging>
   <name>daylog</name>
   <description>Tray app to log what you are doing into a markdown diary</description>
@@ -45,6 +45,18 @@
 
   <build>
     <finalName>daylog</finalName>
+    <resources>
+      <resource>
+        <directory>src/main/resources</directory>
+        <filtering>false</filtering>
+        <excludes><exclude>version.properties</exclude></excludes>
+      </resource>
+      <resource>
+        <directory>src/main/resources</directory>
+        <filtering>true</filtering>
+        <includes><include>version.properties</include></includes>
+      </resource>
+    </resources>
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>

@@ -2,17 +2,12 @@ package daylog.ui;
 
 import daylog.settings.Settings;
 import java.awt.AWTException;
-import java.awt.Color;
-import java.awt.Font;
-import java.awt.Graphics2D;
 import java.awt.MenuItem;
 import java.awt.PopupMenu;
-import java.awt.RenderingHints;
 import java.awt.SystemTray;
 import java.awt.TrayIcon;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.image.BufferedImage;
 import java.util.Optional;
 import javax.swing.SwingUtilities;
 import org.slf4j.Logger;
@@ -43,7 +38,7 @@ public final class TrayApp {
             return false;
         }
         SystemTray tray = SystemTray.getSystemTray();
-        TrayIcon icon = new TrayIcon(drawIcon(tray.getTrayIconSize().width), "Daylog", buildMenu());
+        TrayIcon icon = new TrayIcon(BookIcon.draw(tray.getTrayIconSize().width), "Daylog", buildMenu());
         icon.setImageAutoSize(true);
         icon.addMouseListener(new MouseAdapter() {
             @Override
@@ -87,20 +82,5 @@ public final class TrayApp {
         log.trace("chooseLogFile(): menu item clicked");
         Optional<java.nio.file.Path> chosen = LogFileChooser.choose(null, settings.logFile());
         chosen.ifPresent(settings::saveLogFile);
-    }
-
-    /** Draws a simple icon (a blue rounded square with a white D) at the size the tray asks for. */
-    private static BufferedImage drawIcon(int size) {
-        BufferedImage image = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
-        Graphics2D graphics = image.createGraphics();
-        graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        graphics.setColor(new Color(0x2B6CB0));
-        graphics.fillRoundRect(0, 0, size, size, size / 3, size / 3);
-        graphics.setColor(Color.WHITE);
-        graphics.setFont(new Font(Font.SANS_SERIF, Font.BOLD, size * 3 / 4));
-        int textWidth = graphics.getFontMetrics().stringWidth("D");
-        graphics.drawString("D", (size - textWidth) / 2, size * 3 / 4 + size / 16);
-        graphics.dispose();
-        return image;
     }
 }

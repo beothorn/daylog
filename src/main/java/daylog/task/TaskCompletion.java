@@ -1,11 +1,11 @@
 package daylog.task;
 
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 /**
- * This is the autocomplete rule: given what the user typed and the task history, which task should be suggested.
- * It is a pure function, with no UI, so it is easy to test. The dialog only applies its result.
+ * This is the autocomplete rule: given what the user typed and the task history, which tasks should be offered in the drop-down.
+ * It is a pure function, with no UI, so it is easy to test. The dialog only displays its result.
  */
 public final class TaskCompletion {
 
@@ -13,21 +13,21 @@ public final class TaskCompletion {
     }
 
     /**
-     * Returns the most recent task that starts with the typed text, ignoring case, and is longer than it.
-     * History is ordered oldest first, so we search from the end. Blank input suggests nothing.
+     * Returns up to maxSuggestions tasks that start with the typed text, ignoring case, most recent first.
+     * History is ordered oldest first, so we walk it from the end. Blank input offers the most recent tasks.
+     * A task exactly equal to what was typed is not offered, there is nothing left to complete.
      */
-    public static Optional<TaskName> suggestionFor(String typedText, List<TaskName> historyOldestFirst) {
-        if (typedText == null || typedText.isBlank()) {
-            return Optional.empty();
-        }
-        String typedLowerCase = typedText.toLowerCase();
-        for (int index = historyOldestFirst.size() - 1; index >= 0; index--) {
+    public static List<TaskName> suggestionsFor(String typedText, List<TaskName> historyOldestFirst, int maxSuggestions) {
+        String typedLowerCase = typedText == null ? "" : typedText.strip().toLowerCase();
+        List<TaskName> suggestions = new ArrayList<>();
+        for (int index = historyOldestFirst.size() - 1; index >= 0 && suggestions.size() < maxSuggestions; index--) {
             TaskName candidate = historyOldestFirst.get(index);
-            String candidateLowerCase = candidate.value().toLowerCase();
-            if (candidateLowerCase.startsWith(typedLowerCase) && candidate.value().length() > typedText.length()) {
-                return Optional.of(candidate);
+            boolean matches = candidate.value().toLowerCase().startsWith(typedLowerCase);
+            boolean isExactlyWhatWasTyped = candidate.value().equals(typedText);
+            if (matches && !isExactlyWhatWasTyped) {
+                suggestions.add(candidate);
             }
         }
-        return Optional.empty();
+        return suggestions;
     }
 }

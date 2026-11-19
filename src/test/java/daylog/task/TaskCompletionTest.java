@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
-import java.util.Optional;
 import org.junit.jupiter.api.Test;
 
 class TaskCompletionTest {
@@ -12,20 +11,24 @@ class TaskCompletionTest {
     private final List<TaskName> history = List.of(new TaskName("Offhour work"), new TaskName("Office chores"), new TaskName("Review"));
 
     @Test
-    void suggestsMostRecentMatch() {
-        assertEquals(Optional.of(new TaskName("Office chores")), TaskCompletion.suggestionFor("Off", history));
+    void offersMatchesMostRecentFirst() {
+        assertEquals(List.of(new TaskName("Office chores"), new TaskName("Offhour work")), TaskCompletion.suggestionsFor("Off", history, 8));
     }
 
     @Test
     void ignoresCase() {
-        assertEquals(Optional.of(new TaskName("Review")), TaskCompletion.suggestionFor("rev", history));
+        assertEquals(List.of(new TaskName("Review")), TaskCompletion.suggestionsFor("rev", history, 8));
     }
 
     @Test
-    void nothingForBlankOrUnknownOrExactMatch() {
-        assertTrue(TaskCompletion.suggestionFor("", history).isEmpty());
-        assertTrue(TaskCompletion.suggestionFor(null, history).isEmpty());
-        assertTrue(TaskCompletion.suggestionFor("zzz", history).isEmpty());
-        assertTrue(TaskCompletion.suggestionFor("Review", history).isEmpty());
+    void blankOffersMostRecentTasksUpToTheLimit() {
+        assertEquals(List.of(new TaskName("Review"), new TaskName("Office chores")), TaskCompletion.suggestionsFor("", history, 2));
+        assertEquals(3, TaskCompletion.suggestionsFor(null, history, 8).size());
+    }
+
+    @Test
+    void nothingForUnknownOrExactMatch() {
+        assertTrue(TaskCompletion.suggestionsFor("zzz", history, 8).isEmpty());
+        assertTrue(TaskCompletion.suggestionsFor("Review", history, 8).isEmpty());
     }
 }

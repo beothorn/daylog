@@ -6,7 +6,7 @@ and below a 4-line text box (scrollbar when I write more). I write a sentence or
 the timestamp, the task in backticks, then my text in a fenced block.
 
 ## Pick the task fast
-I type "Off" and the field completes to "Offhour work" from earlier entries. I press Tab/End or just keep typing.
+The dialog opens with the cursor in the text box, the last task already filled in. If I want another task I click the task field and type "Off"; a drop-down lists earlier tasks starting with it, and I pick one with the arrows and Enter or with the mouse.
 
 ## Choose where to log
 I keep a diary folder with one file per day (`01.md`, `02.md`...). I right click the tray icon, choose "Choose log file", and a file

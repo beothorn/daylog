@@ -6,6 +6,7 @@
 - **Log file**: the user-chosen text/markdown file where entries are appended (e.g. a daily diary `19.md`).
 - **App directory**: folder with the app's own data: `~/.daylog` (Windows `%APPDATA%\daylog`).
 - **Task history**: remembered previous tasks, used for autocomplete and for prefilling the last one.
-- **Autocomplete**: inline completion; typing a prefix fills in the rest of the most recent matching task, selected so it can be overtyped.
+- **Autocomplete**: a drop-down under the task field listing earlier tasks that start with what was typed, most recent first.
+- **Version**: the pom version (semver, `-SNAPSHOT` while in development), shown in the dialog. See AGENTS.md, "Versioning".
 - **Tray**: the system notification area where the icon lives.
 - **Microtype**: a small type wrapping a primitive that can only be created with a valid value (e.g. `TaskName`).

@@ -26,7 +26,7 @@ class LogFileAppenderTest {
         Path file = temp.resolve("19.md");
         Files.writeString(file, "# Day\nnotes\n");
         LogFileAppender.append(file, entry);
-        assertEquals("# Day\nnotes\n" + entryText, Files.readString(file));
+        assertEquals("# Day\nnotes\n\n" + entryText, Files.readString(file));
     }
 
     @Test
@@ -34,7 +34,7 @@ class LogFileAppenderTest {
         Path file = temp.resolve("19.md");
         Files.writeString(file, "no trailing newline");
         LogFileAppender.append(file, entry);
-        assertEquals("no trailing newline\n" + entryText, Files.readString(file));
+        assertEquals("no trailing newline\n\n" + entryText, Files.readString(file));
     }
 
     @Test
@@ -42,6 +42,22 @@ class LogFileAppenderTest {
         Path file = temp.resolve("19.md");
         LogFileAppender.append(file, entry);
         LogFileAppender.append(file, entry);
-        assertEquals(entryText + entryText, Files.readString(file));
+        assertEquals(entryText + "\n" + entryText, Files.readString(file));
+    }
+
+    @Test
+    void doesNotAddAnotherBlankLineWhenFileAlreadyEndsInOne(@TempDir Path temp) throws Exception {
+        Path file = temp.resolve("19.md");
+        Files.writeString(file, "notes\n\n");
+        LogFileAppender.append(file, entry);
+        assertEquals("notes\n\n" + entryText, Files.readString(file));
+    }
+
+    @Test
+    void understandsWindowsLineBreaks(@TempDir Path temp) throws Exception {
+        Path file = temp.resolve("19.md");
+        Files.writeString(file, "notes\r\n");
+        LogFileAppender.append(file, entry);
+        assertEquals("notes\r\n\n" + entryText, Files.readString(file));
     }
 }

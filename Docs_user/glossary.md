@@ -12,5 +12,8 @@ A short label of what you are working on, written on one line, for example "Offh
 ## Log file
 The text file where Daylog adds your notes. It is yours: you choose it, and it can already contain other writing.
 
+## Version
+The number such as `0.0.1-SNAPSHOT` shown at the bottom of the Daylog window. It tells you which release you are using.
+
 ## Note
 What you save with Daylog: the date and time, a [task](#task) and what you wrote. Also called an entry.

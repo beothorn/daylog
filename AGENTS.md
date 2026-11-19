@@ -19,15 +19,22 @@ Today only the author. The project is open source (Apache 2.0, on GitHub), so an
 Final users are people who keep a plain-text/markdown diary and want a zero-friction way to append entries.
 They are comfortable running `java -jar`. User docs (`Docs_user`) must not mention code.
 
+# Versioning
+
+**Current version: `0.0.1-SNAPSHOT`** (in development; no release yet). The single source of truth is `<version>` in `pom.xml`:
+Maven copies it into `version.properties`, which the app shows as the last label of the dialog. Never hardcode the version elsewhere.
+When the version changes (only through the `release` skill), update this line too. Semver is used; `-SNAPSHOT` means "in development".
+Release notes are tracked in `RELEASE_NOTES.md` (newest first, `## Unreleased` on top): **add a bullet there for every user-visible change as you make it.**
+
 # Project summary
 
-- Tray icon. Left click opens a dialog: a one-line **task** field (autocomplete from history, prefilled with the last task)
-  and a 4-line **text** area (scrolls when longer). Saving appends an entry to the configured log file.
+- Tray icon (a small book). Left click opens a dialog: a one-line **task** field (drop-down autocomplete from history, prefilled with the
+  last task), a 4-line **text** area (scrolls when longer; it is the focused field), and the version as the last label. Saving appends an entry to the configured log file.
 - Right click menu: Log now, Choose log file, Quit.
 - Runs locally, stores everything on local disk. No network. Distributed as one jar, no installer.
 - Must be **very fast**: instant startup, instant dialog. No heavy dependencies, no classpath scanning, dialog is built once and reused.
 
-Entry format appended to the log file (one entry, followed by a line break):
+Entry format appended to the log file (entries are separated by exactly one blank line):
 
 ````
 2026_11_19_23_55 `Offhour work`
@@ -42,6 +49,7 @@ Details and rules: `Docs_technical/architecture.md`, `Docs_technical/glossary.md
 # Tools
 
 - JDK 21, Maven 3.9 (`mvn`). No wrapper installed; plain `mvn` is fine.
+- `gh` (GitHub CLI, logged in) is needed only for releases.
 - `aibin/` is git-ignored. Put downloaded executables there. Do not put scripts there, scripts go to `scripts/`.
 - Common commands:
 
@@ -63,6 +71,7 @@ Skills live in `.claude/skills/<name>/SKILL.md` (the Claude Code convention; oth
 | `change-log-level` | Raising/lowering log level globally or per package, at runtime start |
 | `analyze-logs` | Reading and filtering daylog's log output to follow a flow |
 | `plan-task` | Writing a plan in `plan/` and moving the card through the kanban |
+| `release` | Choosing the semver version, updating release notes, tagging and uploading the jar to GitHub (`scripts/release.sh`) |
 
 Scripts used by skills live in `scripts/`.
 
@@ -75,9 +84,10 @@ daylog/
   Main.java                  wires everything together, nothing else
   appdir/AppDirectory        resolves ~/.daylog (Windows: %APPDATA%\daylog)
   settings/Settings          persisted settings (log file path) in settings.properties
-  task/                      TaskName (validated microtype), TaskHistory (tasks.txt), TaskCompletion (autocomplete logic)
-  entry/                     LogEntry, EntryFormatter (markdown text), LogFileAppender
-  ui/                        TrayApp (tray + menu), EntryDialog (Swing), LogFileChooser
+  task/                      TaskName (validated microtype), TaskHistory (tasks.txt), TaskCompletion (drop-down suggestions logic)
+  entry/                     LogEntry, EntryFormatter (markdown text), LogFileAppender, EntryRecorder (the save use case)
+  version/AppVersion         reads the pom version from the filtered version.properties
+  ui/                        TrayApp (tray + menu), BookIcon (tray icon drawing), EntryDialog (Swing), LogFileChooser
 ```
 
 - Persistence is plain files in the app directory: `settings.properties`, `tasks.txt` (one task per line, last = most recent).
@@ -112,7 +122,8 @@ Always remind yourself to plan first. Skill `plan-task` has the template.
 # Planning and managing iteration
 
 `kanban/` has folders `backlog/ todo/ doing/ done/ deployed/`. A card is a markdown file (`NNN-name.md`) with a short description,
-the RICE score and a link to its plan. Move the file with `git mv` as it progresses. `deployed/` holds a folder or file per version with release notes.
+the RICE score and a link to its plan. Move the file with `git mv` as it progresses. `deployed/<version>/` holds the cards shipped in that version;
+the release notes themselves are in `RELEASE_NOTES.md`.
 
 Cycle: **plan -> score (RICE) -> prioritize with the user -> develop -> test (run it yourself; ask the user for a manual test of tray/UI behavior, which you cannot fully see) -> release**.
 

@@ -47,7 +47,7 @@ class EntryRecorderTest {
         recorder.record(new TaskName("B"), "");
 
         assertEquals(1, questions.get());
-        assertEquals(2, Files.readAllLines(chosen).size());
+        assertEquals(3, Files.readAllLines(chosen).size());
     }
 
     @Test

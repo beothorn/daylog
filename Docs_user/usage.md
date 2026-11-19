@@ -11,16 +11,17 @@ Right click the tray icon and choose **Choose log file**. A file window opens in
 Pick any text file (a new name creates it). Daylog remembers your choice. See [log file](glossary.md#log-file).
 
 ## Write a note
-1. Click the tray icon. A window opens.
-2. The first line is the [task](glossary.md#task), already filled with your last one. Change it if you like: as you type, Daylog suggests
-   earlier tasks; the suggested part is selected, so keep typing to ignore it, or press **Tab** to accept it.
-3. In the box below write what you are doing, as much as you want (it scrolls).
+1. Click the tray icon (a small book). A window opens with the cursor already in the big box.
+2. In that box write what you are doing, as much as you want (it scrolls).
+3. The first line is the [task](glossary.md#task), already filled with your last one. To change it, click it and type: a list of earlier tasks
+   that start with what you typed drops down. Choose one with the **Up/Down** arrows and **Enter**, or with the mouse. **Esc** closes the list.
+   The window's last line shows the Daylog version.
 4. Press **Save** (or **Ctrl+Enter**). Press **Esc** to close without saving.
 
 If you have not chosen a diary file yet, Daylog asks for one first.
 
 ## What gets written
-Each note adds a line to the end of your diary file with the date and time (`year_month_day_hour_minute`), the task, and your text:
+Each note adds a few lines to the end of your diary file, after one empty line with the date and time (`year_month_day_hour_minute`), the task, and your text:
 
 ````
 2026_11_19_23_55 `Offhour work`
@@ -29,7 +30,7 @@ Now I am writing the setup.
 ```
 ````
 
-Your existing text in the file is never changed; notes are only added at the end.
+Your existing text in the file is never changed; notes are only added at the end, each separated from the previous one by an empty line.
 
 ## Quit
 Right click the tray icon and choose **Quit**.

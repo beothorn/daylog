@@ -29,15 +29,17 @@ Main -> AppDirectory -> Settings, TaskHistory
 - `settings/Settings`: `settings.properties` (`logFile=<absolute path>`). Remembers the last configured file; the chooser opens in its parent folder.
 - `task/TaskName`: validated microtype (non-blank, single line, trimmed).
 - `task/TaskHistory`: `tasks.txt`, one task per line, most recent last, de-duplicated (re-saving moves a task to last).
-- `task/TaskCompletion`: pure function, given a typed prefix and the history returns the most recent task starting with it (case-insensitive).
-- `entry/LogEntry`: timestamp + task + text. `entry/EntryFormatter`: renders the markdown block. `entry/LogFileAppender`: appends it.
+- `task/TaskCompletion`: pure function, given the typed text and the history returns up to 8 tasks starting with it (case-insensitive), most recent first. The dialog shows them in a drop-down (a `JPopupMenu` with a non-focusable `JList`, so typing continues in the field; Down/Up move, Enter chooses, Esc closes).
+- `entry/LogEntry`: timestamp + task + text. `entry/EntryFormatter`: renders the markdown block. `entry/LogFileAppender`: appends it. `entry/EntryRecorder`: the save use case (find/ask log file, stamp time, append, remember task).
+- `version/AppVersion`: reads `version.properties`, which Maven filters from `${project.version}` (only that file is filtered, see the pom `resources`).
+- `ui/BookIcon`: draws the tray icon (open book) with Java2D at the size the tray asks for.
 - `ui/*`: Swing/AWT classes, no business logic.
 
 ## Entry format
 
 `yyyy_MM_dd_HH_mm` + space + `` `task` `` + newline, then if text is not blank a fenced block with the text, then a final newline.
 If the text itself contains a run of backticks of length >= 3, the fence is made longer than the longest run so the markdown stays valid.
-Before appending, if the target file is non-empty and does not end with a newline, a newline is added first. The file is created if missing
+Before appending, if the target file is non-empty a separator is added so exactly one blank line sits between the old content and the new entry (nothing if the file already ends in a blank line, one line break if it ends in one, two if it ends in none; CRLF is understood). The file is created if missing
 (parents too). Writes use `StandardOpenOption.APPEND`, UTF-8.
 
 ```mermaid
@@ -58,6 +60,7 @@ sequenceDiagram
 ## Gotchas
 
 - Linux tray: GNOME removed legacy tray support; users need an AppIndicator extension. On Wayland the JDK tray runs through XWayland.
+- The dialog opens with focus on the text area (the task rarely changes). Clicking the tray while the dialog is open only brings it to front, so typed text is not lost.
 - `TrayIcon` mouse events differ between OS: use a `MouseListener` filtering button 1; the right-click menu is the AWT `PopupMenu` attached to the icon.
 - If `SystemTray.isSupported()` is false the app logs an error and exits with a message on stderr.
 - No log file configured when saving: the chooser opens first; cancelling aborts the save and keeps the dialog open.

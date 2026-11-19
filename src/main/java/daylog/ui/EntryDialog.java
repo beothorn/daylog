@@ -4,55 +4,68 @@ import daylog.entry.EntryRecorder;
 import daylog.task.TaskCompletion;
 import daylog.task.TaskHistory;
 import daylog.task.TaskName;
+import daylog.version.AppVersion;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.FlowLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
 import java.awt.event.KeyEvent;
-import java.util.Optional;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.util.List;
 import javax.swing.AbstractAction;
 import javax.swing.BorderFactory;
+import javax.swing.DefaultListModel;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
+import javax.swing.JList;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.KeyStroke;
+import javax.swing.ListSelectionModel;
 import javax.swing.ScrollPaneConstants;
-import javax.swing.text.AttributeSet;
-import javax.swing.text.BadLocationException;
-import javax.swing.text.DocumentFilter;
-import javax.swing.text.AbstractDocument;
+import javax.swing.SwingUtilities;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * This is the window where the user writes an entry: a one line task (with autocomplete) and a four line text area.
- * It is built once and only hidden/shown afterwards, which is what makes opening it instant.
- * It contains no business logic, saving is delegated to EntryRecorder.
+ * This is the window where the user writes an entry: a one line task (with a drop-down of earlier tasks), a four line text area
+ * and, as the last label, the daylog version. It is built once and only hidden/shown afterwards, which makes opening it instant.
+ * It contains no business logic: saving is delegated to EntryRecorder and the suggestions come from TaskCompletion.
  */
 public final class EntryDialog {
 
     private static final Logger log = LoggerFactory.getLogger(EntryDialog.class);
-    private static final KeyStroke CTRL_ENTER = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, KeyEvent.CTRL_DOWN_MASK);
-    private static final KeyStroke ESCAPE = KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0);
+    private static final int MAX_SUGGESTIONS = 8;
 
     private final TaskHistory taskHistory;
     private final EntryRecorder entryRecorder;
     private final JDialog dialog = new JDialog((java.awt.Frame) null, "Daylog", false);
     private final JTextField taskField = new JTextField(40);
     private final JTextArea textArea = new JTextArea(4, 40);
+    private final DefaultListModel<String> suggestionModel = new DefaultListModel<>();
+    private final JList<String> suggestionList = new JList<>(suggestionModel);
+    private final JPopupMenu suggestionPopup = new JPopupMenu();
+    private boolean changingTaskFromCode = false;
 
     /** Builds all components right away; must be called on the Swing event thread. */
     public EntryDialog(TaskHistory taskHistory, EntryRecorder entryRecorder) {
         log.trace("EntryDialog(taskHistory, entryRecorder): building the dialog once");
         this.taskHistory = taskHistory;
         this.entryRecorder = entryRecorder;
-        installAutocomplete();
         buildLayout();
-        installShortcuts();
+        buildSuggestionPopup();
+        installTaskFieldBehavior();
+        installDialogShortcuts();
     }
 
     /** The parent to use for other windows (the file explorer) opened on top of this dialog. */
@@ -61,22 +74,25 @@ public final class EntryDialog {
     }
 
     /**
-     * Shows the dialog: the task is prefilled with the last task and selected (typing replaces it, Tab keeps it),
-     * the text is cleared, and the window is brought to the front.
+     * Shows the dialog with the last task prefilled and an empty text, focus on the text area because the text changes every time
+     * and the task rarely does. If the dialog is already open we only bring it to the front, so nothing the user typed is lost.
      */
     public void show() {
-        log.trace("show(): prefilling the last task and showing the dialog");
-        Optional<TaskName> lastTask = taskHistory.last();
-        taskField.setText(lastTask.map(TaskName::value).orElse(""));
-        taskField.selectAll();
+        log.trace("show(): showing the dialog");
+        if (dialog.isVisible()) {
+            dialog.toFront();
+            textArea.requestFocusInWindow();
+            return;
+        }
+        setTaskFromCode(taskHistory.last().map(TaskName::value).orElse(""));
         textArea.setText("");
         dialog.setLocationRelativeTo(null);
         dialog.setVisible(true);
         dialog.toFront();
-        taskField.requestFocusInWindow();
+        textArea.requestFocusInWindow();
     }
 
-    /** This arranges the task row, the scrollable text area and the buttons. */
+    /** This arranges the task row, the scrollable text area and the bottom row (version label on the left, buttons on the right). */
     private void buildLayout() {
         textArea.setLineWrap(true);
         textArea.setWrapStyleWord(true);
@@ -95,37 +111,165 @@ public final class EntryDialog {
         buttons.add(cancelButton);
         buttons.add(saveButton);
 
+        JLabel versionLabel = new JLabel("Daylog " + AppVersion.current());
+        versionLabel.setForeground(Color.GRAY);
+        JPanel bottomRow = new JPanel(new BorderLayout());
+        bottomRow.add(buttons, BorderLayout.CENTER);
+        bottomRow.add(versionLabel, BorderLayout.WEST);
+
         JPanel content = new JPanel(new BorderLayout(0, 8));
         content.setBorder(BorderFactory.createEmptyBorder(10, 10, 6, 10));
         content.add(taskRow, BorderLayout.NORTH);
         content.add(textScroll, BorderLayout.CENTER);
-        content.add(buttons, BorderLayout.SOUTH);
+        content.add(bottomRow, BorderLayout.SOUTH);
         dialog.setContentPane(content);
         dialog.setAlwaysOnTop(true);
         dialog.pack();
     }
 
+    /** The drop-down is a popup holding a list. Neither takes keyboard focus, so the user keeps typing in the task field. */
+    private void buildSuggestionPopup() {
+        suggestionList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        suggestionList.setFocusable(false);
+        suggestionList.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent event) {
+                int clickedIndex = suggestionList.locationToIndex(event.getPoint());
+                if (clickedIndex >= 0) {
+                    chooseSuggestion(suggestionModel.get(clickedIndex));
+                }
+            }
+        });
+        suggestionPopup.setFocusable(false);
+        suggestionPopup.setBorder(BorderFactory.createLineBorder(Color.GRAY));
+        suggestionPopup.add(suggestionList);
+    }
+
+    /**
+     * Wires the task field: typing refreshes the drop-down; Down/Up move in it (Down also opens it); Enter chooses the highlighted
+     * suggestion or, when none is highlighted, jumps to the text area; Escape closes the drop-down first and the dialog second.
+     */
+    private void installTaskFieldBehavior() {
+        taskField.getDocument().addDocumentListener(new DocumentListener() {
+            @Override public void insertUpdate(DocumentEvent event) { taskTextChanged(); }
+            @Override public void removeUpdate(DocumentEvent event) { taskTextChanged(); }
+            @Override public void changedUpdate(DocumentEvent event) { }
+        });
+        taskField.addFocusListener(new FocusAdapter() {
+            @Override
+            public void focusLost(FocusEvent event) {
+                suggestionPopup.setVisible(false);
+            }
+        });
+        bindTaskKey(KeyEvent.VK_DOWN, "suggestionDown", () -> moveSuggestionSelection(1));
+        bindTaskKey(KeyEvent.VK_UP, "suggestionUp", () -> moveSuggestionSelection(-1));
+        bindTaskKey(KeyEvent.VK_ENTER, "taskEnter", this::enterPressedInTask);
+        bindTaskKey(KeyEvent.VK_ESCAPE, "taskEscape", this::escapePressedInTask);
+    }
+
+    /** Registers a key on the task field only (it wins over the dialog-wide shortcuts). */
+    private void bindTaskKey(int keyCode, String actionName, Runnable action) {
+        taskField.getInputMap(JComponent.WHEN_FOCUSED).put(KeyStroke.getKeyStroke(keyCode, 0), actionName);
+        taskField.getActionMap().put(actionName, new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent event) {
+                action.run();
+            }
+        });
+    }
+
     /** Ctrl+Enter saves and Escape closes, from anywhere in the dialog. */
-    private void installShortcuts() {
+    private void installDialogShortcuts() {
         JComponent root = dialog.getRootPane();
-        root.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(CTRL_ENTER, "save");
+        root.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, KeyEvent.CTRL_DOWN_MASK), "save");
         root.getActionMap().put("save", new AbstractAction() {
             @Override
-            public void actionPerformed(java.awt.event.ActionEvent event) {
+            public void actionPerformed(ActionEvent event) {
                 save();
             }
         });
-        root.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(ESCAPE, "close");
+        root.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), "close");
         root.getActionMap().put("close", new AbstractAction() {
             @Override
-            public void actionPerformed(java.awt.event.ActionEvent event) {
+            public void actionPerformed(ActionEvent event) {
                 dialog.setVisible(false);
             }
         });
     }
 
+    /** Sets the task text without opening the drop-down (that is only for what the user types). */
+    private void setTaskFromCode(String task) {
+        changingTaskFromCode = true;
+        taskField.setText(task);
+        changingTaskFromCode = false;
+        suggestionPopup.setVisible(false);
+    }
+
+    /** Called on every change of the task text; later, on the event thread, the drop-down is refreshed. */
+    private void taskTextChanged() {
+        if (changingTaskFromCode) {
+            return;
+        }
+        SwingUtilities.invokeLater(this::refreshSuggestions);
+    }
+
+    /** Fills the drop-down with the matching tasks and shows it under the field, or hides it when nothing matches. */
+    private void refreshSuggestions() {
+        log.trace("refreshSuggestions(): computing suggestions for '{}'", taskField.getText());
+        List<TaskName> suggestions = TaskCompletion.suggestionsFor(taskField.getText(), taskHistory.all(), MAX_SUGGESTIONS);
+        if (suggestions.isEmpty() || !taskField.isShowing()) {
+            suggestionPopup.setVisible(false);
+            return;
+        }
+        suggestionModel.clear();
+        suggestions.forEach(task -> suggestionModel.addElement(task.value()));
+        suggestionList.clearSelection();
+        suggestionList.setVisibleRowCount(suggestions.size());
+        suggestionPopup.setPopupSize(taskField.getWidth(), suggestionList.getPreferredScrollableViewportSize().height + 2);
+        suggestionPopup.show(taskField, 0, taskField.getHeight());
+    }
+
+    /** Down/Up: opens the drop-down if it is closed (Down), otherwise moves the highlight, wrapping around. */
+    private void moveSuggestionSelection(int step) {
+        if (!suggestionPopup.isVisible()) {
+            if (step > 0) {
+                refreshSuggestions();
+            }
+            return;
+        }
+        int count = suggestionModel.size();
+        int nextIndex = Math.floorMod(suggestionList.getSelectedIndex() + step, count);
+        suggestionList.setSelectedIndex(nextIndex);
+    }
+
+    /** Enter in the task field: take the highlighted suggestion if there is one, otherwise go write the text. */
+    private void enterPressedInTask() {
+        if (suggestionPopup.isVisible() && suggestionList.getSelectedIndex() >= 0) {
+            chooseSuggestion(suggestionList.getSelectedValue());
+            return;
+        }
+        suggestionPopup.setVisible(false);
+        textArea.requestFocusInWindow();
+    }
+
+    /** Escape in the task field closes the drop-down if open, otherwise the dialog. */
+    private void escapePressedInTask() {
+        if (suggestionPopup.isVisible()) {
+            suggestionPopup.setVisible(false);
+            return;
+        }
+        dialog.setVisible(false);
+    }
+
+    /** Puts the chosen suggestion in the task field, closes the drop-down and moves on to the text area. */
+    private void chooseSuggestion(String task) {
+        log.debug("Suggestion chosen: {}", task);
+        setTaskFromCode(task);
+        textArea.requestFocusInWindow();
+    }
+
     /**
-     * Validates the task, records the entry and closes the dialog. An invalid (blank) task turns the field red and keeps the dialog open;
+     * Validates the task, records the entry and closes the dialog. A blank task turns the field red and keeps the dialog open;
      * so does a failed save (no log file chosen), so the user does not lose what was written.
      */
     private void save() {
@@ -140,38 +284,10 @@ public final class EntryDialog {
             return;
         }
         taskField.setBackground(UIManagerDefaults.textFieldBackground());
+        suggestionPopup.setVisible(false);
         boolean saved = entryRecorder.record(task, textArea.getText());
         if (saved) {
             dialog.setVisible(false);
         }
-    }
-
-    /**
-     * This installs the inline autocomplete: after the user types at the end of the task field we append the rest of the most recent
-     * matching task and select it, so more typing overwrites it and Tab/End keeps it. Removing text never triggers a completion.
-     */
-    private void installAutocomplete() {
-        ((AbstractDocument) taskField.getDocument()).setDocumentFilter(new DocumentFilter() {
-            @Override
-            public void replace(FilterBypass bypass, int offset, int length, String text, AttributeSet attributes)
-                throws BadLocationException {
-                super.replace(bypass, offset, length, text, attributes);
-                if (text == null || text.isEmpty()) {
-                    return;
-                }
-                String typed = bypass.getDocument().getText(0, bypass.getDocument().getLength());
-                if (offset + text.length() != typed.length()) {
-                    return;
-                }
-                Optional<TaskName> suggestion = TaskCompletion.suggestionFor(typed, taskHistory.all());
-                if (suggestion.isEmpty()) {
-                    return;
-                }
-                String remainder = suggestion.get().value().substring(typed.length());
-                super.insertString(bypass, typed.length(), remainder, attributes);
-                taskField.setCaretPosition(typed.length() + remainder.length());
-                taskField.moveCaretPosition(typed.length());
-            }
-        });
     }
 }
