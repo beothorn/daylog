@@ -5,9 +5,8 @@ The version being developed is the one in `pom.xml` (see AGENTS.md, "Versioning"
 
 ## Unreleased
 
-- Tray icon with left-click dialog: task (drop-down autocomplete from earlier tasks, last task prefilled) and a 4-line text area.
-- The text area is focused when the dialog opens.
+- Tray icon (a small open book, sized to fill the tray slot) with a left-click dialog: task (drop-down autocomplete from earlier tasks, left aligned, last task prefilled) and a 4-line text area.
+- Enter saves; Shift+Enter inserts a line break. The text area is focused when the dialog opens.
 - Entries are appended to a configurable markdown/text file as `yyyy_MM_dd_HH_mm `task`` plus a fenced block, separated by a blank line.
-- Right-click menu: Log now, Choose log file, Quit.
-- The dialog shows the version as its last label.
-- Tray icon is a small book.
+- Right-click menu: Log now, Choose log file, the version, Quit.
+- Uses the system look and feel.

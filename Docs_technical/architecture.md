@@ -15,7 +15,7 @@
 
 Performance requirement: "super fast". Consequences: no frameworks, no reflection, build the dialog once and keep it hidden
 between uses (showing is instant), read history once at startup, keep it in memory, append to disk on save.
-Avoid slow Swing look-and-feel initialisation tricks; use the system L&F via `UIManager.getSystemLookAndFeelClassName()` set once.
+The system look and feel (`UIManager.getSystemLookAndFeelClassName()`, GTK on Linux) is used because the owner prefers it; it costs about 450 ms of startup against the Swing default (measured 1.0 s vs 0.6 s). It is set once at startup.
 
 ## Components
 
@@ -51,7 +51,7 @@ sequenceDiagram
   participant H as TaskHistory
   U->>T: left click tray icon
   T->>D: show() (prefilled with last task)
-  U->>D: type task + text, Ctrl+Enter
+  U->>D: type task + text, Enter (Shift+Enter = line break)
   D->>A: append(logFile, LogEntry)
   D->>H: remember(task)
   D-->>U: hide
@@ -60,6 +60,8 @@ sequenceDiagram
 ## Gotchas
 
 - Linux tray: GNOME removed legacy tray support; users need an AppIndicator extension. On Wayland the JDK tray runs through XWayland.
+- Keys: Enter saves from the text area and from the task field (unless a drop-down suggestion is highlighted, then Enter picks it); Shift+Enter inserts a line break (mapped to the text area's `insert-break` action); Ctrl+Enter also saves; Esc closes the drop-down, then the dialog.
+- The tray menu has the version as a disabled item. The tray icon is drawn to fill the square the JDK reports (24x24 on Ubuntu/GNOME).
 - The dialog opens with focus on the text area (the task rarely changes). Clicking the tray while the dialog is open only brings it to front, so typed text is not lost.
 - `TrayIcon` mouse events differ between OS: use a `MouseListener` filtering button 1; the right-click menu is the AWT `PopupMenu` attached to the icon.
 - If `SystemTray.isSupported()` is false the app logs an error and exits with a message on stderr.

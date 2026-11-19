@@ -46,15 +46,8 @@ public final class Main {
         }
     }
 
-    /**
-     * Native look and feel on Windows only. On Linux the system one is GTK, which measured about 450 ms slower to start
-     * (1.0 s against 0.6 s), and speed matters more than looks here. Failing is harmless, the default one is used.
-     */
+    /** Native look and feel (GTK on Linux, Windows on Windows). Failing is harmless, the Swing default is used. */
     private static void useSystemLookAndFeel() {
-        if (!System.getProperty("os.name").toLowerCase().contains("win")) {
-            log.debug("Not Windows, keeping the default look and feel for a faster start");
-            return;
-        }
         try {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
         } catch (Exception e) {

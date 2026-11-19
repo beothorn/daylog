@@ -15,8 +15,9 @@ Pick any text file (a new name creates it). Daylog remembers your choice. See [l
 2. In that box write what you are doing, as much as you want (it scrolls).
 3. The first line is the [task](glossary.md#task), already filled with your last one. To change it, click it and type: a list of earlier tasks
    that start with what you typed drops down. Choose one with the **Up/Down** arrows and **Enter**, or with the mouse. **Esc** closes the list.
-   The window's last line shows the Daylog version.
-4. Press **Save** (or **Ctrl+Enter**). Press **Esc** to close without saving.
+4. Press **Enter** to save. To start a new line inside your text, press **Shift+Enter**. Press **Esc** to close without saving.
+
+The right click menu also shows the Daylog [version](glossary.md#version) you are using.
 
 If you have not chosen a diary file yet, Daylog asks for one first.
 

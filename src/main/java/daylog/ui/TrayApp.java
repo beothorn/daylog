@@ -1,6 +1,7 @@
 package daylog.ui;
 
 import daylog.settings.Settings;
+import daylog.version.AppVersion;
 import java.awt.AWTException;
 import java.awt.MenuItem;
 import java.awt.PopupMenu;
@@ -15,7 +16,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * This class puts the daylog icon in the system tray: left click opens the entry dialog, right click shows the menu
- * (Log now, Choose log file, Quit). It only wires UI events to the dialog, the settings and the chooser.
+ * (Log now, Choose log file, the version, Quit). It only wires UI events to the dialog, the settings and the chooser.
  */
 public final class TrayApp {
 
@@ -73,6 +74,9 @@ public final class TrayApp {
         menu.add(logNow);
         menu.add(chooseFile);
         menu.addSeparator();
+        MenuItem versionLabel = new MenuItem("Daylog " + AppVersion.current());
+        versionLabel.setEnabled(false);
+        menu.add(versionLabel);
         menu.add(quit);
         return menu;
     }

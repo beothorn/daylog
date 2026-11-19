@@ -22,15 +22,15 @@ They are comfortable running `java -jar`. User docs (`Docs_user`) must not menti
 # Versioning
 
 **Current version: `0.0.1-SNAPSHOT`** (in development; no release yet). The single source of truth is `<version>` in `pom.xml`:
-Maven copies it into `version.properties`, which the app shows as the last label of the dialog. Never hardcode the version elsewhere.
+Maven copies it into `version.properties`, which the app shows in the tray's right-click menu. Never hardcode the version elsewhere.
 When the version changes (only through the `release` skill), update this line too. Semver is used; `-SNAPSHOT` means "in development".
 Release notes are tracked in `RELEASE_NOTES.md` (newest first, `## Unreleased` on top): **add a bullet there for every user-visible change as you make it.**
 
 # Project summary
 
 - Tray icon (a small book). Left click opens a dialog: a one-line **task** field (drop-down autocomplete from history, prefilled with the
-  last task), a 4-line **text** area (scrolls when longer; it is the focused field), and the version as the last label. Saving appends an entry to the configured log file.
-- Right click menu: Log now, Choose log file, Quit.
+  last task), a 4-line **text** area (scrolls when longer; it is the focused field), **Enter saves**, Shift+Enter adds a line break. Saving appends an entry to the configured log file.
+- Right click menu: Log now, Choose log file, the version (disabled label), Quit.
 - Runs locally, stores everything on local disk. No network. Distributed as one jar, no installer.
 - Must be **very fast**: instant startup, instant dialog. No heavy dependencies, no classpath scanning, dialog is built once and reused.
 
@@ -91,7 +91,7 @@ daylog/
 ```
 
 - Persistence is plain files in the app directory: `settings.properties`, `tasks.txt` (one task per line, last = most recent).
-- UI is AWT `SystemTray` + Swing. No third-party UI libs. Pure logic (formatting, completion, history, appending) has no UI imports and is unit tested.
+- UI is AWT `SystemTray` + Swing with the system look and feel (GTK on Linux; the user chose it over the faster Swing default, ~450 ms slower startup). No third-party UI libs. Pure logic (formatting, completion, history, appending) has no UI imports and is unit tested.
 - Logging: SLF4J API + `slf4j-simple`. Config by `-Dorg.slf4j.simpleLogger.*` system properties (see skill `change-log-level`).
 - Linux note: GNOME needs the AppIndicator/KStatusNotifierItem extension for tray icons to show. Not a bug in this app.
 - Build: Maven, `maven-shade-plugin` produces `target/daylog.jar` with `Main-Class` set. Tests: JUnit 5 + AssertJ-free plain assertions.

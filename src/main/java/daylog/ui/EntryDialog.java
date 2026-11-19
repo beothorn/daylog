@@ -4,7 +4,6 @@ import daylog.entry.EntryRecorder;
 import daylog.task.TaskCompletion;
 import daylog.task.TaskHistory;
 import daylog.task.TaskName;
-import daylog.version.AppVersion;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.FlowLayout;
@@ -38,8 +37,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * This is the window where the user writes an entry: a one line task (with a drop-down of earlier tasks), a four line text area
- * and, as the last label, the daylog version. It is built once and only hidden/shown afterwards, which makes opening it instant.
+ * This is the window where the user writes an entry: a one line task (with a drop-down of earlier tasks) and a four line text area.
+ * Enter saves, Shift+Enter adds a line break. It is built once and only hidden/shown afterwards, which makes opening it instant.
  * It contains no business logic: saving is delegated to EntryRecorder and the suggestions come from TaskCompletion.
  */
 public final class EntryDialog {
@@ -92,7 +91,7 @@ public final class EntryDialog {
         textArea.requestFocusInWindow();
     }
 
-    /** This arranges the task row, the scrollable text area and the bottom row (version label on the left, buttons on the right). */
+    /** This arranges the task row, the scrollable text area and the buttons row. */
     private void buildLayout() {
         textArea.setLineWrap(true);
         textArea.setWrapStyleWord(true);
@@ -103,7 +102,7 @@ public final class EntryDialog {
         taskRow.add(new JLabel("Task"), BorderLayout.WEST);
         taskRow.add(taskField, BorderLayout.CENTER);
 
-        JButton saveButton = new JButton("Save (Ctrl+Enter)");
+        JButton saveButton = new JButton("Save (Enter)");
         saveButton.addActionListener(event -> save());
         JButton cancelButton = new JButton("Cancel");
         cancelButton.addActionListener(event -> dialog.setVisible(false));
@@ -111,17 +110,11 @@ public final class EntryDialog {
         buttons.add(cancelButton);
         buttons.add(saveButton);
 
-        JLabel versionLabel = new JLabel("Daylog " + AppVersion.current());
-        versionLabel.setForeground(Color.GRAY);
-        JPanel bottomRow = new JPanel(new BorderLayout());
-        bottomRow.add(buttons, BorderLayout.CENTER);
-        bottomRow.add(versionLabel, BorderLayout.WEST);
-
         JPanel content = new JPanel(new BorderLayout(0, 8));
         content.setBorder(BorderFactory.createEmptyBorder(10, 10, 6, 10));
         content.add(taskRow, BorderLayout.NORTH);
         content.add(textScroll, BorderLayout.CENTER);
-        content.add(bottomRow, BorderLayout.SOUTH);
+        content.add(buttons, BorderLayout.SOUTH);
         dialog.setContentPane(content);
         dialog.setAlwaysOnTop(true);
         dialog.pack();
@@ -142,7 +135,8 @@ public final class EntryDialog {
         });
         suggestionPopup.setFocusable(false);
         suggestionPopup.setBorder(BorderFactory.createLineBorder(Color.GRAY));
-        suggestionPopup.add(suggestionList);
+        suggestionPopup.setLayout(new BorderLayout());
+        suggestionPopup.add(suggestionList, BorderLayout.CENTER);
     }
 
     /**
@@ -178,8 +172,19 @@ public final class EntryDialog {
         });
     }
 
-    /** Ctrl+Enter saves and Escape closes, from anywhere in the dialog. */
+    /**
+     * Enter in the text area saves and Shift+Enter inserts a line break (the text area's own "insert-break" action).
+     * Ctrl+Enter also saves, and Escape closes, from anywhere in the dialog.
+     */
     private void installDialogShortcuts() {
+        textArea.getInputMap(JComponent.WHEN_FOCUSED).put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "save");
+        textArea.getInputMap(JComponent.WHEN_FOCUSED).put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, KeyEvent.SHIFT_DOWN_MASK), "insert-break");
+        textArea.getActionMap().put("save", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent event) {
+                save();
+            }
+        });
         JComponent root = dialog.getRootPane();
         root.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, KeyEvent.CTRL_DOWN_MASK), "save");
         root.getActionMap().put("save", new AbstractAction() {
@@ -242,14 +247,13 @@ public final class EntryDialog {
         suggestionList.setSelectedIndex(nextIndex);
     }
 
-    /** Enter in the task field: take the highlighted suggestion if there is one, otherwise go write the text. */
+    /** Enter in the task field: take the highlighted suggestion if there is one, otherwise save the entry. */
     private void enterPressedInTask() {
         if (suggestionPopup.isVisible() && suggestionList.getSelectedIndex() >= 0) {
             chooseSuggestion(suggestionList.getSelectedValue());
             return;
         }
-        suggestionPopup.setVisible(false);
-        textArea.requestFocusInWindow();
+        save();
     }
 
     /** Escape in the task field closes the drop-down if open, otherwise the dialog. */

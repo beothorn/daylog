@@ -7,7 +7,11 @@ import java.awt.Polygon;
 import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 
-/** This draws the tray icon: a small open book (blue cover, two white pages with text lines), at any square size. */
+/**
+ * This draws the tray icon: an open book (blue cover, two white pages with text lines), at any square size.
+ * The book fills the whole square (a 16 unit design grid, 1 unit margin) because panels like Ubuntu's give icons little room
+ * and a book with empty borders looks small and off-center.
+ */
 final class BookIcon {
 
     private BookIcon() {
@@ -22,21 +26,21 @@ final class BookIcon {
         double unit = size / 16.0;
 
         graphics.setColor(new Color(0x2B6CB0));
-        graphics.fillRoundRect(scaled(0, unit), scaled(3, unit), scaled(16, unit), scaled(11, unit), scaled(3, unit), scaled(3, unit));
+        graphics.fillRoundRect(scaled(0, unit), scaled(1.5, unit), scaled(16, unit), scaled(13.5, unit), scaled(3, unit), scaled(3, unit));
 
         graphics.setColor(Color.WHITE);
-        graphics.fillPolygon(page(unit, 1.5, 7.5));
-        graphics.fillPolygon(page(unit, 14.5, 8.5));
+        graphics.fillPolygon(page(unit, 1.2, 7.6));
+        graphics.fillPolygon(page(unit, 14.8, 8.4));
 
         graphics.setColor(new Color(0x2B6CB0));
         graphics.setStroke(new BasicStroke((float) Math.max(1, unit * 0.9)));
-        graphics.drawLine(scaled(8, unit), scaled(3.5, unit), scaled(8, unit), scaled(13, unit));
+        graphics.drawLine(scaled(8, unit), scaled(2.5, unit), scaled(8, unit), scaled(14, unit));
 
         graphics.setColor(new Color(0x9DB7D5));
         graphics.setStroke(new BasicStroke((float) Math.max(0.6, unit * 0.5)));
-        for (double lineY : new double[] {6.5, 8.5, 10.5}) {
-            graphics.drawLine(scaled(3, unit), scaled(lineY, unit), scaled(6.5, unit), scaled(lineY, unit));
-            graphics.drawLine(scaled(9.5, unit), scaled(lineY, unit), scaled(13, unit), scaled(lineY, unit));
+        for (double lineY : new double[] {6, 8.2, 10.4}) {
+            graphics.drawLine(scaled(3, unit), scaled(lineY, unit), scaled(6.2, unit), scaled(lineY, unit));
+            graphics.drawLine(scaled(9.8, unit), scaled(lineY, unit), scaled(13, unit), scaled(lineY, unit));
         }
         graphics.dispose();
         return image;
@@ -45,10 +49,10 @@ final class BookIcon {
     /** One page: a rectangle from the outer edge x to the spine x, slightly taller towards the spine. */
     private static Polygon page(double unit, double outerX, double spineX) {
         Polygon page = new Polygon();
-        page.addPoint(scaled(outerX, unit), scaled(4.5, unit));
-        page.addPoint(scaled(spineX, unit), scaled(3.5, unit));
-        page.addPoint(scaled(spineX, unit), scaled(13, unit));
-        page.addPoint(scaled(outerX, unit), scaled(12, unit));
+        page.addPoint(scaled(outerX, unit), scaled(3.2, unit));
+        page.addPoint(scaled(spineX, unit), scaled(2.5, unit));
+        page.addPoint(scaled(spineX, unit), scaled(14, unit));
+        page.addPoint(scaled(outerX, unit), scaled(13.2, unit));
         return page;
     }
 
