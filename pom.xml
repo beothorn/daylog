@@ -6,7 +6,7 @@
 
   <groupId>io.github.beothorn</groupId>
   <artifactId>daylog</artifactId>
-  <version>0.0.1-SNAPSHOT</version>
+  <version>0.0.1</version>
   <packaging>jar</packaging>
   <name>daylog</name>
   <description>Tray app to log what you are doing into a markdown diary</description>
