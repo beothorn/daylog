@@ -10,10 +10,10 @@ You keep a plain-text diary and want zero-friction entries: autocomplete from pa
 multi-line notes, and your existing file is only ever appended to.
 
 ## Use
-Download `daylog.jar` from the [releases page](https://github.com/Beothorn/daylog/releases) (or build it with `mvn verify`), then:
+Download the jar from the [releases page](https://github.com/Beothorn/daylog/releases) (or build it with `mvn verify`), then run it (use the file name you downloaded):
 
 ```bash
-java -jar daylog.jar
+java -jar daylog-0.0.1.jar
 ```
 
 Full guide: [Docs_user/usage.md](Docs_user/usage.md). Developers: see [AGENTS.md](AGENTS.md) and [Docs_technical](Docs_technical).

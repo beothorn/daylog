@@ -3,7 +3,7 @@
 Daylog helps you remember what you did. You write a short note about what you are doing, and Daylog adds it to your diary file.
 
 ## Start
-Run `daylog.jar` (it needs Java 21 or newer installed, see the [glossary](glossary.md#java)). An icon appears in the [tray](glossary.md#tray).
+Run the Daylog jar file with Java, for example `java -jar daylog-0.0.1.jar` (it needs Java 21 or newer installed, see the [glossary](glossary.md#java)). An icon appears in the [tray](glossary.md#tray).
 Nothing else is installed on your computer.
 
 ## Choose your diary file
